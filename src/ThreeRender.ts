@@ -1,13 +1,7 @@
 import * as THREE from "three"
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
-
-interface BoneRot {
-    bone: THREE.Bone
-    rotation: THREE.Euler
-    add: THREE.Euler
-    speed: number
-    damp: number
-}
+// @ts-ignore
+import {WiggleBone} from "wiggle"
 
 export class ThreeRender {
     container: HTMLDivElement;
@@ -22,7 +16,7 @@ export class ThreeRender {
 
     skogNode?: THREE.Object3D;
 
-    bones: BoneRot[] = []
+    bones: any[] = []
 
     constructor(element: HTMLDivElement){
         this.container = element;
@@ -38,33 +32,39 @@ export class ThreeRender {
             this.scene.add(gltf.scene);
             gltf.scene.traverse((child) => {
                 if (child.name === "skog"){
-                    const mesh = child as THREE.Mesh
+                    const mesh = child as THREE.SkinnedMesh
                     const map = (mesh.material as THREE.MeshStandardMaterial).map
                     mesh.material = new THREE.MeshBasicMaterial({map: map})
                     // const textureLoader = new THREE.TextureLoader();
                     // textureLoader.load("/Skog_1.jpg", (tex) => {
                     //     mesh.material = new THREE.MeshBasicMaterial({map: tex})
                     // })
+                    // const helper = new WiggleRigHelper({
+                    //     skeleton: mesh.skeleton,
+                    //     dotSize: 0.2,
+                    //     lineWidth: 0.02,
+                    //   });
+                    //   this.scene.add(helper);
+                    // let rootBone: THREE.Bone
+                    mesh.skeleton.bones.forEach((bone) => {
+                        console.log(bone.name)
+                        if (!(bone.parent! as any).isBone) {
+                            // rootBone = bone
+                        } else if (!bone.name.toLowerCase().includes("body")) {
+                            let velocity = 0.3
+                            if (bone.name.toLowerCase().includes("bone"))
+                                velocity = 0.6
+                            const ogEuler: THREE.Euler = new THREE.Euler().copy(bone.rotation)
+                            const wiggleBone = new WiggleBone(bone, { velocity: velocity });
+                            this.bones.push(wiggleBone);
+                            bone.rotation.copy(ogEuler);
+                        }
+                    })
                 }
                 if (child.name === "skogSkel"){
                     this.skogNode = child
                 }
-                if (child.name !== "Body1" && child.type === "Bone"){
-                    let speed = 4
-                    let damp = 90
-                    const bone = child as THREE.Bone
-                    const lowerName = bone.name.toLowerCase()
-                    if (lowerName.includes("leg") || lowerName.includes("arm") || lowerName.includes("head") || lowerName.includes("neck") || lowerName === "body3"){
-                        speed = 25
-                    }
-                    this.bones.push({
-                        bone: bone,
-                        rotation: new THREE.Euler().copy(bone.rotation),
-                        add: new THREE.Euler(0,0,0, "XYZ"),
-                        damp: damp,
-                        speed: speed
-                    })
-                }
+                
             })
         })
         console.log(this.bones)
@@ -90,15 +90,16 @@ export class ThreeRender {
     previousMouse?: THREE.Vector2
     animate(currentTime: number) {
         requestAnimationFrame((time) => this.animate(time))
-        const deltaTime = (currentTime - this.previousTime) / 1000;
-        if (this.skogNode) this.placeSkog(deltaTime);
+        // const deltaTime = (currentTime - this.previousTime) / 1000;
+        if (this.skogNode) this.placeSkog();
         this.renderer.render(this.scene, this.camera);
         this.previousTime = currentTime;
     }
 
     raycaster = new THREE.Raycaster();
+    time: number = 0
 
-    placeSkog(delta: number) {
+    placeSkog() {
         this.raycaster.setFromCamera(this.mouse, this.camera)
         const rayDirection = this.raycaster.ray.direction;
 
@@ -106,22 +107,22 @@ export class ThreeRender {
         const point = new THREE.Vector3().copy(this.camera.position).add(rayDirection.multiplyScalar(distance));
 
         this.skogNode?.position.copy(point);
+
         if (this.previousMouse)
-        this.bones.forEach(element => {
-            const add = new THREE.Vector3(element.add.x, element.add.y, element.add.z);
-            const mouseDelta = new THREE.Vector2();
-            mouseDelta.copy(this.mouse).sub(this.previousMouse!).multiplyScalar(delta * element.speed * 100);
-            mouseDelta.x *= -1;
-            add.add(new THREE.Vector3(mouseDelta.y, mouseDelta.x, 0))
-            const newRot = new THREE.Euler(element.rotation.x + add.x,element.rotation.y + add.y,element.rotation.z + add.z);
-            element.bone.rotation.copy(newRot);
-            add.multiplyScalar(delta * element.damp)
-            element.add.setFromVector3(add);
-            // element.bone.rotation.copy()
-        });
+        this.bones.forEach((wiggleBone) => {
+            wiggleBone.update();
+        })
+
+        // this.time += delta
+        if (this.time > 1){
+            this.bones.forEach((wiggleBone) => {
+                wiggleBone.reset();
+            })
+        }
+
         if (this.previousMouse)
         this.previousMouse.copy(this.mouse)
-    else this.previousMouse = new THREE.Vector2().copy(this.mouse)
+    else {this.previousMouse = new THREE.Vector2().copy(this.mouse)}
     }
 
 
