@@ -34,7 +34,7 @@ export class ThreeRender {
         this.camera.position.z = 1.5
 
         const loader = new GLTFLoader();
-        loader.load("/skog.glb", (gltf) => {
+        loader.load("./skog.glb", (gltf) => {
             this.scene.add(gltf.scene);
             gltf.scene.traverse((child) => {
                 if (child.name === "skog"){
