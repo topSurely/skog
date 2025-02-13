@@ -19,7 +19,6 @@ function ThreeContainer() {
 
 
   const progress = (e: ProgressEvent) => {
-    console.log(e);
     setLoadProgress({ loaded: e.loaded, total: e.total });
   }
 
