@@ -14,6 +14,8 @@ export class ThreeRender {
 
     mouse: THREE.Vector2 = new THREE.Vector2(0,0)
 
+    progress?: (e:ProgressEvent) => void;
+
     skogNode?: THREE.Object3D;
 
     bones: any[] = []
@@ -65,6 +67,8 @@ export class ThreeRender {
                 }
                 
             })
+        }, (e) => {
+            this.progress && this.progress(e)
         })
         window.addEventListener('pointermove', (e) => {
             this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
