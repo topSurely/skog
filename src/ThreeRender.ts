@@ -47,7 +47,6 @@ export class ThreeRender {
                     //   this.scene.add(helper);
                     // let rootBone: THREE.Bone
                     mesh.skeleton.bones.forEach((bone) => {
-                        console.log(bone.name)
                         if (!(bone.parent! as any).isBone) {
                             // rootBone = bone
                         } else if (!bone.name.toLowerCase().includes("body")) {
@@ -67,7 +66,6 @@ export class ThreeRender {
                 
             })
         })
-        console.log(this.bones)
         window.addEventListener('pointermove', (e) => {
             this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
