@@ -8,5 +8,5 @@ export default defineConfig({
   server: {
     middlewareMode: false, // Default mode
   },
-  base: '/emordnilap-machine/',
+  base: '/skog/',
 })
