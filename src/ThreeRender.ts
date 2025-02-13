@@ -85,7 +85,6 @@ export class ThreeRender {
     
 
     previousTime = 0
-    previousMouse?: THREE.Vector2
     animate(currentTime: number) {
         requestAnimationFrame((time) => this.animate(time))
         // const deltaTime = (currentTime - this.previousTime) / 1000;
@@ -103,10 +102,7 @@ export class ThreeRender {
 
         const distance = this.camera.position.z;
         const point = new THREE.Vector3().copy(this.camera.position).add(rayDirection.multiplyScalar(distance));
-
         this.skogNode?.position.copy(point);
-
-        if (this.previousMouse)
         this.bones.forEach((wiggleBone) => {
             wiggleBone.update();
         })
@@ -117,10 +113,6 @@ export class ThreeRender {
                 wiggleBone.reset();
             })
         }
-
-        if (this.previousMouse)
-        this.previousMouse.copy(this.mouse)
-    else {this.previousMouse = new THREE.Vector2().copy(this.mouse)}
     }
 
 
