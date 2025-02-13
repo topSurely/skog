@@ -5,6 +5,8 @@ interface BoneRot {
     bone: THREE.Bone
     rotation: THREE.Euler
     add: THREE.Euler
+    speed: number
+    damp: number
 }
 
 export class ThreeRender {
@@ -29,7 +31,7 @@ export class ThreeRender {
         this.renderer.setSize(this.screen.x, this.screen.y);
         this.container.appendChild(this.renderer.domElement);
 
-        this.camera.position.z = 3
+        this.camera.position.z = 1.5
 
         const loader = new GLTFLoader();
         loader.load("/skog.glb", (gltf) => {
@@ -48,11 +50,19 @@ export class ThreeRender {
                     this.skogNode = child
                 }
                 if (child.name !== "Body1" && child.type === "Bone"){
+                    let speed = 4
+                    let damp = 90
                     const bone = child as THREE.Bone
+                    const lowerName = bone.name.toLowerCase()
+                    if (lowerName.includes("leg") || lowerName.includes("arm") || lowerName.includes("head") || lowerName.includes("neck") || lowerName === "body3"){
+                        speed = 25
+                    }
                     this.bones.push({
                         bone: bone,
-                        rotation: bone.rotation,
-                        add: new THREE.Euler(0,0,0, "XYZ")
+                        rotation: new THREE.Euler().copy(bone.rotation),
+                        add: new THREE.Euler(0,0,0, "XYZ"),
+                        damp: damp,
+                        speed: speed
                     })
                 }
             })
@@ -77,7 +87,7 @@ export class ThreeRender {
     
 
     previousTime = 0
-    previousMouse: THREE.Vector2 = new THREE.Vector2()
+    previousMouse?: THREE.Vector2
     animate(currentTime: number) {
         requestAnimationFrame((time) => this.animate(time))
         const deltaTime = (currentTime - this.previousTime) / 1000;
@@ -96,11 +106,22 @@ export class ThreeRender {
         const point = new THREE.Vector3().copy(this.camera.position).add(rayDirection.multiplyScalar(distance));
 
         this.skogNode?.position.copy(point);
-
+        if (this.previousMouse)
         this.bones.forEach(element => {
-
+            const add = new THREE.Vector3(element.add.x, element.add.y, element.add.z);
+            const mouseDelta = new THREE.Vector2();
+            mouseDelta.copy(this.mouse).sub(this.previousMouse!).multiplyScalar(delta * element.speed * 100);
+            mouseDelta.x *= -1;
+            add.add(new THREE.Vector3(mouseDelta.y, mouseDelta.x, 0))
+            const newRot = new THREE.Euler(element.rotation.x + add.x,element.rotation.y + add.y,element.rotation.z + add.z);
+            element.bone.rotation.copy(newRot);
+            add.multiplyScalar(delta * element.damp)
+            element.add.setFromVector3(add);
             // element.bone.rotation.copy()
         });
+        if (this.previousMouse)
+        this.previousMouse.copy(this.mouse)
+    else this.previousMouse = new THREE.Vector2().copy(this.mouse)
     }
 
 
