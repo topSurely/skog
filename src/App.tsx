@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ThreeRender } from './ThreeRender';
-import { BrowserRouter as Router, useLocation } from 'react-router-dom';
+import { HashRouter as Router, useLocation } from 'react-router-dom';
 import { Color } from 'three';
 
 function App() {
@@ -20,7 +20,7 @@ function ThreeContainer() {
     if (containerRef.current != null) {
       const renderer = new ThreeRender(containerRef.current)
       console.log(location.pathname);
-      if (location.pathname === '/skog/valentine') {
+      if (location.pathname === '/valentine') {
         renderer.renderer.setClearColor(new Color("#F4AAFF"))
       }
 
